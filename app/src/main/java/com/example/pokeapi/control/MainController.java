@@ -1,6 +1,5 @@
 package com.example.pokeapi.control;
 
-import android.util.Log;
 import android.view.View;
 
 import com.bumptech.glide.Glide;
@@ -27,6 +26,7 @@ public class MainController implements View.OnClickListener , HTTPSWebUtilDomi.O
         this.httpsWebUtilDomi.setListener(this);
         this.mainActivity.getSearchBtn().setOnClickListener(this);
         this.mainActivity.getCatchBtn().setOnClickListener(this);
+        loadMyPokemons();
     }
 
     @Override
@@ -37,9 +37,7 @@ public class MainController implements View.OnClickListener , HTTPSWebUtilDomi.O
                 String idOrName= mainActivity.getNameOrIdET().getText().toString();
 
                 new Thread(
-                        ()->{
-                            httpsWebUtilDomi.GETrequest(Constants.SEARCH_CALLBACK,"https://pokeapi.co/api/v2/pokemon/"+idOrName);
-                        }
+                        ()-> httpsWebUtilDomi.GETrequest(Constants.SEARCH_CALLBACK,"https://pokeapi.co/api/v2/pokemon/"+idOrName)
                 ).start();
                 break;
             case R.id.catchBtn:
@@ -71,10 +69,10 @@ public class MainController implements View.OnClickListener , HTTPSWebUtilDomi.O
                             mainActivity.getPokeHab3TV().setText(pokemon.getMoves()[2].getMove().getName());
                             mainActivity.getPokeHab4TV().setText(pokemon.getMoves()[3].getMove().getName());
 
-                            mainActivity.getPokeSpeedTV().setText("speed: "+pokemon.getStats()[0].getBase_stat());
-                            mainActivity.getPokeDefenseTV().setText("defense: "+pokemon.getStats()[3].getBase_stat());
-                            mainActivity.getPokeAttackTV().setText("attack: "+pokemon.getStats()[4].getBase_stat());
-                            mainActivity.getPokeHpTV().setText("HP: "+pokemon.getStats()[5].getBase_stat());
+                            mainActivity.getPokeSpeedTV().setText(String.format("speed: %d", pokemon.getStats()[0].getBase_stat()));
+                            mainActivity.getPokeDefenseTV().setText(String.format("defense: %d", pokemon.getStats()[3].getBase_stat()));
+                            mainActivity.getPokeAttackTV().setText(String.format("attack: %d", pokemon.getStats()[4].getBase_stat()));
+                            mainActivity.getPokeHpTV().setText(String.format("HP: %d", pokemon.getStats()[5].getBase_stat()));
 
                             Glide.with(mainActivity).load(pokemon.getSprites().getFront_default()).centerCrop().into(mainActivity.getPokeImgIV());
                         }
@@ -94,7 +92,7 @@ public class MainController implements View.OnClickListener , HTTPSWebUtilDomi.O
                             mainActivity.getMyPokemonsTV().setText("");
                             for(String key : mypokemons.keySet()){
                                 Pokemon poke= mypokemons.get(key);
-                                mainActivity.getMyPokemonsTV().append(poke.getForms()[0].getName()+"\n");
+                                mainActivity.getMyPokemonsTV().append(String.format("%s\n", poke.getForms()[0].getName()));
                             }
                         }
                 );
@@ -104,9 +102,7 @@ public class MainController implements View.OnClickListener , HTTPSWebUtilDomi.O
 
     private void loadMyPokemons() {
        new Thread(
-               ()->{
-                   httpsWebUtilDomi.GETrequest(Constants.GET_MY_POKEMONS,"https://pokeapi-1f7e4.firebaseio.com/pokemons.json");
-               }
+               ()-> httpsWebUtilDomi.GETrequest(Constants.GET_MY_POKEMONS,"https://pokeapi-1f7e4.firebaseio.com/pokemons.json")
        ).start();
 
     }
