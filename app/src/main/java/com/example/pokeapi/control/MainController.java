@@ -10,17 +10,23 @@ import com.example.pokeapi.util.Constants;
 import com.example.pokeapi.util.HTTPSWebUtilDomi;
 import com.example.pokeapi.view.MainActivity;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
+import java.util.HashMap;
 
 public class MainController implements View.OnClickListener , HTTPSWebUtilDomi.OnResponseListener{
 
     private MainActivity mainActivity;
     private  HTTPSWebUtilDomi httpsWebUtilDomi;
+    private Pokemon pokemon;
 
     public MainController(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
         this.httpsWebUtilDomi= new HTTPSWebUtilDomi();
         this.httpsWebUtilDomi.setListener(this);
         this.mainActivity.getSearchBtn().setOnClickListener(this);
+        this.mainActivity.getCatchBtn().setOnClickListener(this);
     }
 
     @Override
@@ -36,6 +42,16 @@ public class MainController implements View.OnClickListener , HTTPSWebUtilDomi.O
                         }
                 ).start();
                 break;
+            case R.id.catchBtn:
+                new Thread(
+                        ()->{
+                            Gson gson = new Gson();
+                            String json=gson.toJson(pokemon);
+                            httpsWebUtilDomi.POSTrequest(Constants.CATCH_CALLBACK,"https://pokeapi-1f7e4.firebaseio.com/pokemons.json",json);
+                        }
+                ).start();
+
+                break;
         }
     }
 
@@ -44,7 +60,7 @@ public class MainController implements View.OnClickListener , HTTPSWebUtilDomi.O
         switch (callbackID){
             case Constants.SEARCH_CALLBACK:
                 Gson gson=new Gson();
-                Pokemon pokemon=gson.fromJson(response, Pokemon.class);
+                pokemon=gson.fromJson(response, Pokemon.class);
                 mainActivity.runOnUiThread(
                         ()->{
                             mainActivity.getPokeNameTV().setText(pokemon.getForms()[0].getName());
@@ -64,6 +80,34 @@ public class MainController implements View.OnClickListener , HTTPSWebUtilDomi.O
                         }
                 );
                 break;
+            case Constants.CATCH_CALLBACK:
+                loadMyPokemons();
+
+                break;
+            case Constants.GET_MY_POKEMONS:
+                Gson g= new Gson();
+                Type type = new TypeToken<HashMap<String,Pokemon>>(){}.getType();
+                HashMap<String,Pokemon> mypokemons= g.fromJson(response,type);
+
+                mainActivity.runOnUiThread(
+                        ()->{
+                            mainActivity.getMyPokemonsTV().setText("");
+                            for(String key : mypokemons.keySet()){
+                                Pokemon poke= mypokemons.get(key);
+                                mainActivity.getMyPokemonsTV().append(poke.getForms()[0].getName()+"\n");
+                            }
+                        }
+                );
+                break;
         }
+    }
+
+    private void loadMyPokemons() {
+       new Thread(
+               ()->{
+                   httpsWebUtilDomi.GETrequest(Constants.GET_MY_POKEMONS,"https://pokeapi-1f7e4.firebaseio.com/pokemons.json");
+               }
+       ).start();
+
     }
 }
